@@ -118,16 +118,9 @@ sha256sum -c hashes.sha256
 - ZIP-/WARC-Exportfunktion
 - Web-Oberfläche zur Mehrfachverwendung
 
-Pull Requests willkommen!
-
 ---
 
 ## 📄 Lizenz
 
 Dieses Projekt steht unter der **MIT-Lizenz**. Verwendung auf eigene Verantwortung. Es wird keine Haftung für die juristische Verwertbarkeit oder Beweiskraft im Einzelfall übernommen.
 
----
-
-## 📬 Kontakt
-
-Bei Fragen, Vorschlägen oder Fehlern gerne GitHub-Issue eröffnen oder einen Pull Request stellen.
