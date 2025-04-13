@@ -27,6 +27,7 @@ Mit diesem Tool können Webseiten zuverlässig dokumentiert werden, etwa zur:
 - Speicherung dynamisch erzeugter Inhalte (gerenderter HTML-Code)
 - Extraktion und Sicherung von `<video><source>`-Elementen als MP4-Dateien
 - Traceroute-Analyse (als `traceroute.json` und `traceroute.txt`)
+  - Plattformunabhängig **ohne Root-Rechte**, durch Nutzung des Systemkommandos `traceroute` (Linux/macOS) bzw. `tracert` (Windows)
 - Mitschnitt aller HTTP-Anfragen in einer HAR-Datei (`network.har`)
 - Optional: Konvertierung der HAR-Datei in `network.json`
 
@@ -39,7 +40,6 @@ Mit diesem Tool können Webseiten zuverlässig dokumentiert werden, etwa zur:
 - [Python 3.10+](https://www.python.org/)
 - [`uv`](https://github.com/astral-sh/uv)
 - [`playwright`](https://playwright.dev/python/) – für Screenshot & PDF (Chromium)
-- [`scapy`](https://scapy.net/) – für Traceroute
 
 ### Einrichtung
 
@@ -53,7 +53,7 @@ source .venv/bin/activate  # Linux/macOS
 .venv\Scripts\activate     # Windows
 
 # Abhängigkeiten installieren
-uv add requests playwright scapy
+uv add requests playwright
 playwright install
 ```
 
@@ -88,10 +88,7 @@ GPG-Schlüssel generieren (falls noch nicht vorhanden):
 ```bash
 gpg --full-generate-key
 ```
-### Traceroute mit Scap
-Scapy erfordert Root-Rechte. Stelle sicher, dass du die Berechtigung hast, Traceroutes durchzuführen. Unter Linux kannst du das Skript mit `sudo` ausführen. Unter Windwows ist Scapy nicht nativ verfügbar, aber du kannst es in einer WSL-Umgebung verwenden.
 
-```bash
 ---
 
 ## 🗂️ Ergebnisstruktur
@@ -128,7 +125,7 @@ Zur späteren Prüfung, ob Dateien unverändert sind:
 sha256sum -c hashes.sha256
 ```
 
-## 🧩 Erweiterungsideen
+## 🧰 Erweiterungsideen
 
 - Integration von Blockchain-Zeitstempeln
 - ZIP-/WARC-Exportfunktion
@@ -140,4 +137,3 @@ sha256sum -c hashes.sha256
 ## 📄 Lizenz
 
 Dieses Projekt steht unter der **MIT-Lizenz**. Verwendung auf eigene Verantwortung. Es wird keine Haftung für die juristische Verwertbarkeit oder Beweiskraft im Einzelfall übernommen.
-
