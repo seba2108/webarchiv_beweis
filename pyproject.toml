@@ -1,0 +1,10 @@
+[project]
+name = "webarchiv-beweis"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "playwright>=1.51.0",
+    "requests>=2.32.3",
+    "scapy>=2.6.1",
+]

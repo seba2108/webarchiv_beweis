@@ -24,6 +24,11 @@ Mit diesem Tool können Webseiten zuverlässig dokumentiert werden, etwa zur:
 - Automatische Versionierung bei Mehrfachaufrufen
 - Protokollierung aller Schritte in einer `verlauf.json`-Datei
 - Archivordner mit Zeitstempel und URL-Kennung
+- Speicherung dynamisch erzeugter Inhalte (gerenderter HTML-Code)
+- Extraktion und Sicherung von `<video><source>`-Elementen als MP4-Dateien
+- Traceroute-Analyse (als `traceroute.json` und `traceroute.txt`)
+- Mitschnitt aller HTTP-Anfragen in einer HAR-Datei (`network.har`)
+- Optional: Konvertierung der HAR-Datei in `network.json`
 
 ---
 
@@ -32,8 +37,9 @@ Mit diesem Tool können Webseiten zuverlässig dokumentiert werden, etwa zur:
 ### Voraussetzungen
 
 - [Python 3.10+](https://www.python.org/)
-- [`uv`](https://github.com/astral-sh/uv) 
+- [`uv`](https://github.com/astral-sh/uv)
 - [`playwright`](https://playwright.dev/python/) – für Screenshot & PDF (Chromium)
+- [`scapy`](https://scapy.net/) – für Traceroute
 
 ### Einrichtung
 
@@ -47,7 +53,8 @@ source .venv/bin/activate  # Linux/macOS
 .venv\Scripts\activate     # Windows
 
 # Abhängigkeiten installieren
-uv add requests playwright playwright install
+uv add requests playwright scapy
+playwright install
 ```
 
 ---
@@ -81,7 +88,10 @@ GPG-Schlüssel generieren (falls noch nicht vorhanden):
 ```bash
 gpg --full-generate-key
 ```
+### Traceroute mit Scap
+Scapy erfordert Root-Rechte. Stelle sicher, dass du die Berechtigung hast, Traceroutes durchzuführen. Unter Linux kannst du das Skript mit `sudo` ausführen. Unter Windwows ist Scapy nicht nativ verfügbar, aber du kannst es in einer WSL-Umgebung verwenden.
 
+```bash
 ---
 
 ## 🗂️ Ergebnisstruktur
@@ -90,10 +100,16 @@ Das Skript erstellt einen chronologisch benannten Ordner z. B.:
 
 ```
 20250412T154500Z_example.com_info_page/
-├── seite.html            ← HTML-Quelltext
+├── seite.html            ← HTML-Quelltext (ursprünglich geladen)
+├── seite_rendered.html   ← vom Browser gerenderter HTML-Inhalt
 ├── seite.pdf             ← Darstellung als PDF
 ├── screenshot.png        ← Vollbild-Screenshot
 ├── http_headers.json     ← HTTP-Header vom Server
+├── network.har           ← Mitschnitt aller HTTP-Anfragen (HAR-Format)
+├── network.json          ← (optional) JSON-Version der HAR-Datei
+├── traceroute.json       ← Traceroute als strukturierte Hops (JSON)
+├── traceroute.txt        ← Traceroute als Klartextliste
+├── video_1.mp4 ...       ← gespeicherte Videoquellen aus der Seite
 ├── metadaten.json        ← Zeit, IP, User-Agent, etc.
 ├── hashes.sha256         ← SHA256-Prüfsummen aller Dateien
 ├── verlauf.json          ← JSON-Protokoll aller Verarbeitungsschritte
@@ -117,6 +133,7 @@ sha256sum -c hashes.sha256
 - Integration von Blockchain-Zeitstempeln
 - ZIP-/WARC-Exportfunktion
 - Web-Oberfläche zur Mehrfachverwendung
+- Analyse der HAR-Datei (Filter, Ladezeiten, Domains)
 
 ---
 
