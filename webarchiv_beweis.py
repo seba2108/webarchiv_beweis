@@ -1,14 +1,15 @@
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 import socket
 import hashlib
 import json
 import requests
 import subprocess
-from urllib.parse import urlparse
+import platform
+import shutil
+from urllib.parse import urlparse, urljoin
 from playwright.sync_api import sync_playwright
-from scapy.all import traceroute  # pip install scapy
 
 # === KONFIGURATION ===
 SIGN_KEY_ID = None
@@ -22,7 +23,7 @@ if len(sys.argv) != 2:
 URL = sys.argv[1]
 
 # === ZEITSTEMPEL UND ORDNERVERGABE ===
-timestamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 parsed = urlparse(URL)
 safe_host = parsed.netloc.replace(":", "_")
 safe_path = parsed.path.strip("/").replace("/", "_") or "root"
@@ -39,7 +40,7 @@ folder.mkdir(parents=True)
 log_entries = []
 
 def log(msg):
-    entry = {"timestamp": datetime.utcnow().isoformat() + "Z", "message": msg}
+    entry = {"timestamp": datetime.now(timezone.utc).isoformat(), "message": msg}
     print(f"[{entry['timestamp']}] {msg}")
     log_entries.append(entry)
 
@@ -75,20 +76,22 @@ with sync_playwright() as p:
     (folder / "seite_rendered.html").write_text(rendered_html, encoding="utf-8")
     log("Dynamisch gerenderter HTML-Inhalt gespeichert.")
 
-    # Videos aus <video><source>
-    video_urls = page.eval_on_selector_all(
-        "video source[src]", "elements => elements.map(el => el.src)"
-    )
+    # Videos aus <video><source> und <video src=...>
+    video_urls = set()
+    video_urls.update(page.eval_on_selector_all("video source[src]", "els => els.map(el => el.src)"))
+    video_urls.update(page.eval_on_selector_all("video[src]", "els => els.map(el => el.src)"))
+    video_urls = {urljoin(URL, v) for v in video_urls if v}
+
     for i, video_url in enumerate(video_urls):
         try:
-            vid_response = requests.get(video_url, stream=True, headers={"User-Agent": user_agent})
+            vid_response = requests.get(video_url, stream=True, headers={"User-Agent": user_agent}, timeout=20)
             video_file = folder / f"video_{i+1}.mp4"
             with video_file.open("wb") as f:
                 for chunk in vid_response.iter_content(chunk_size=8192):
                     f.write(chunk)
-            log(f"Video gespeichert: {video_file.name}")
+            log(f"Video gespeichert: {video_file.name} von {video_url}")
         except Exception as e:
-            log(f"Fehler beim Herunterladen von Video {i+1}: {e}")
+            log(f"Fehler beim Herunterladen von Video {i+1} ({video_url}): {e}")
 
     # Screenshot und PDF
     page.screenshot(path=str(folder / "screenshot.png"), full_page=True)
@@ -107,30 +110,53 @@ try:
 except Exception as e:
     log(f"Fehler beim Parsen der HAR-Datei: {e}")
 
-# === TRACEROUTE ALS JSON + TXT ===
-def save_traceroute_scapy_json(domain: str, json_path: Path, txt_path: Path = None):
-    log(f"Starte Traceroute mit scapy zu {domain} ...")
+# === TRACEROUTE (plattformabhängig via subprocess) ===
+def save_traceroute_subprocess(domain: str, json_path: Path, txt_path: Path = None):
+    log(f"Starte Traceroute (plattformabhängig) zu {domain} ...")
+    system = platform.system()
+    if system == "Windows":
+        cmd = ["tracert", "-d", domain]
+    else:
+        traceroute_cmd = shutil.which("traceroute")
+        if not traceroute_cmd:
+            log("❌ traceroute-Befehl nicht gefunden.")
+            return
+        cmd = [traceroute_cmd, "-n", "-q", "1", "-w", "2", domain]
+
     try:
-        ans, _ = traceroute(domain, maxttl=30, verbose=False)
-        hops = []
-        for snd, rcv in ans:
-            hop_data = {
-                "ttl": rcv.ttl,
-                "ip": rcv.src,
-                "sent_probe_ip": snd.dst,
-                "rtt_ms": round((rcv.time - snd.sent_time) * 1000, 3)
-            }
-            hops.append(hop_data)
-        json_path.write_text(json.dumps(hops, indent=2), encoding="utf-8")
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        if result.returncode != 0:
+            log(f"Traceroute-Fehler: {result.stderr.strip()}")
+            return
+
+        lines = result.stdout.strip().splitlines()
+        parsed = []
+        for line in lines:
+            line = line.strip()
+            if not line or line.lower().startswith(("traceroute", "tracert")):
+                continue
+            parts = line.split()
+            try:
+                if system == "Windows":
+                    ttl = int(parts[0])
+                    ip = parts[-1]
+                else:
+                    ttl = int(parts[0])
+                    ip = parts[1]
+                parsed.append({"ttl": ttl, "ip": ip})
+            except Exception:
+                continue
+
+        json_path.write_text(json.dumps(parsed, indent=2), encoding="utf-8")
         log("Traceroute (JSON) gespeichert.")
         if txt_path:
-            lines = [f"{h['ttl']}\t{h['ip']} ({h['rtt_ms']} ms)" for h in hops]
-            txt_path.write_text("\n".join(lines), encoding="utf-8")
+            txt_path.write_text("\n".join([f"{hop['ttl']}\t{hop['ip']}" for hop in parsed]), encoding="utf-8")
             log("Traceroute (TXT) gespeichert.")
-    except Exception as e:
-        log(f"Fehler bei Traceroute mit scapy: {e}")
 
-save_traceroute_scapy_json(
+    except Exception as e:
+        log(f"Traceroute (subprocess) fehlgeschlagen: {e}")
+
+save_traceroute_subprocess(
     parsed.netloc,
     folder / "traceroute.json",
     folder / "traceroute.txt"

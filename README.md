@@ -25,9 +25,10 @@ Mit diesem Tool können Webseiten zuverlässig dokumentiert werden, etwa zur:
 - Protokollierung aller Schritte in einer `verlauf.json`-Datei
 - Archivordner mit Zeitstempel und URL-Kennung
 - Speicherung dynamisch erzeugter Inhalte (gerenderter HTML-Code)
-- Extraktion und Sicherung von `<video><source>`-Elementen als MP4-Dateien
-- Traceroute-Analyse (als `traceroute.json` und `traceroute.txt`)
-  - Plattformunabhängig **ohne Root-Rechte**, durch Nutzung des Systemkommandos `traceroute` (Linux/macOS) bzw. `tracert` (Windows)
+- Extraktion und Sicherung aller `<video>`-Elemente (`<video src>` & `<video><source>`) als MP4-Dateien
+- Plattformunabhängige Traceroute-Analyse (`traceroute.json` und `traceroute.txt`):
+  - über Systemkommando `traceroute` (Linux/macOS) bzw. `tracert` (Windows)
+  - kein Root erforderlich
 - Mitschnitt aller HTTP-Anfragen in einer HAR-Datei (`network.har`)
 - Optional: Konvertierung der HAR-Datei in `network.json`
 
@@ -125,7 +126,7 @@ Zur späteren Prüfung, ob Dateien unverändert sind:
 sha256sum -c hashes.sha256
 ```
 
-## 🧰 Erweiterungsideen
+## 🪠 Erweiterungsideen
 
 - Integration von Blockchain-Zeitstempeln
 - ZIP-/WARC-Exportfunktion
@@ -137,3 +138,4 @@ sha256sum -c hashes.sha256
 ## 📄 Lizenz
 
 Dieses Projekt steht unter der **MIT-Lizenz**. Verwendung auf eigene Verantwortung. Es wird keine Haftung für die juristische Verwertbarkeit oder Beweiskraft im Einzelfall übernommen.
+
