@@ -19,6 +19,7 @@ Mit diesem Tool können Webseiten zuverlässig dokumentiert werden, etwa zur:
 
 - Vollständiger Abruf einer Webseite (HTML, Screenshot, PDF)
 - Speicherung technischer Metadaten (IP-Adresse, HTTP-Header, User-Agent)
+- WHOIS-Abfrage der Domain (als `whois.txt`)
 - Erzeugung fester SHA256-Hashwerte für alle Inhalte
 - Optional: digitale Signatur mittels GPG
 - Automatische Versionierung bei Mehrfachaufrufen
@@ -41,6 +42,7 @@ Mit diesem Tool können Webseiten zuverlässig dokumentiert werden, etwa zur:
 - [Python 3.10+](https://www.python.org/)
 - [`uv`](https://github.com/astral-sh/uv)
 - [`playwright`](https://playwright.dev/python/) – für Screenshot & PDF (Chromium)
+- [`python-whois`](https://pypi.org/project/python-whois/) – für WHOIS-Abfrage
 
 ### Einrichtung
 
@@ -54,7 +56,7 @@ source .venv/bin/activate  # Linux/macOS
 .venv\Scripts\activate     # Windows
 
 # Abhängigkeiten installieren
-uv add requests playwright
+uv add requests playwright python-whois
 playwright install
 ```
 
@@ -107,6 +109,7 @@ Das Skript erstellt einen chronologisch benannten Ordner z. B.:
 ├── network.json          ← (optional) JSON-Version der HAR-Datei
 ├── traceroute.json       ← Traceroute als strukturierte Hops (JSON)
 ├── traceroute.txt        ← Traceroute als Klartextliste
+├── whois.txt             ← WHOIS-Domainabfrage
 ├── video_1.mp4 ...       ← gespeicherte Videoquellen aus der Seite
 ├── metadaten.json        ← Zeit, IP, User-Agent, etc.
 ├── hashes.sha256         ← SHA256-Prüfsummen aller Dateien
@@ -126,7 +129,7 @@ Zur späteren Prüfung, ob Dateien unverändert sind:
 sha256sum -c hashes.sha256
 ```
 
-## 🪠 Erweiterungsideen
+## 🧰 Erweiterungsideen
 
 - Integration von Blockchain-Zeitstempeln
 - ZIP-/WARC-Exportfunktion

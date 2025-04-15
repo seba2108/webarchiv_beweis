@@ -8,6 +8,7 @@ import requests
 import subprocess
 import platform
 import shutil
+import whois
 from urllib.parse import urlparse, urljoin
 from playwright.sync_api import sync_playwright
 
@@ -63,6 +64,16 @@ metadata = {
 }
 (folder / "metadaten.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
 log("Metadaten gespeichert.")
+
+# === WHOIS-ABFRAGE ===
+try:
+    domain_whois = whois.whois(parsed.netloc)
+    whois_path = folder / "whois.txt"
+    whois_text = "\n".join(f"{k}: {v}" for k, v in domain_whois.items() if v)
+    whois_path.write_text(whois_text, encoding="utf-8")
+    log(f"WHOIS-Informationen gespeichert: {whois_path.name}")
+except Exception as e:
+    log(f"Fehler bei WHOIS-Abfrage: {e}")
 
 # === DYNAMISCHE INHALTE & HAR & VIDEOS ===
 with sync_playwright() as p:
