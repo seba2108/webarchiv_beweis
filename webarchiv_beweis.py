@@ -82,12 +82,10 @@ with sync_playwright() as p:
     page = context.new_page()
     page.goto(URL, wait_until="networkidle")
 
-    # Dynamisches HTML
     rendered_html = page.content()
     (folder / "seite_rendered.html").write_text(rendered_html, encoding="utf-8")
     log("Dynamisch gerenderter HTML-Inhalt gespeichert.")
 
-    # Videos aus <video><source> und <video src=...>
     video_urls = set()
     video_urls.update(page.eval_on_selector_all("video source[src]", "els => els.map(el => el.src)"))
     video_urls.update(page.eval_on_selector_all("video[src]", "els => els.map(el => el.src)"))
@@ -104,7 +102,6 @@ with sync_playwright() as p:
         except Exception as e:
             log(f"Fehler beim Herunterladen von Video {i+1} ({video_url}): {e}")
 
-    # Screenshot und PDF
     page.screenshot(path=str(folder / "screenshot.png"), full_page=True)
     page.pdf(path=str(folder / "seite.pdf"), format="A4")
 
@@ -121,7 +118,24 @@ try:
 except Exception as e:
     log(f"Fehler beim Parsen der HAR-Datei: {e}")
 
-# === TRACEROUTE (plattformabhängig via subprocess) ===
+# === TRACEROUTE MIT IP-INFOS ===
+def lookup_ip_info(ip: str) -> dict:
+    try:
+        response = requests.get(f"https://ipinfo.io/{ip}/json", timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            return {
+                "hostname": data.get("hostname"),
+                "city": data.get("city"),
+                "region": data.get("region"),
+                "country": data.get("country"),
+                "org": data.get("org"),
+                "asn": data.get("asn", {}).get("asn") if isinstance(data.get("asn"), dict) else None,
+            }
+    except Exception:
+        pass
+    return {}
+
 def save_traceroute_subprocess(domain: str, json_path: Path, txt_path: Path = None):
     log(f"Starte Traceroute (plattformabhängig) zu {domain} ...")
     system = platform.system()
@@ -148,20 +162,19 @@ def save_traceroute_subprocess(domain: str, json_path: Path, txt_path: Path = No
                 continue
             parts = line.split()
             try:
-                if system == "Windows":
-                    ttl = int(parts[0])
-                    ip = parts[-1]
-                else:
-                    ttl = int(parts[0])
-                    ip = parts[1]
-                parsed.append({"ttl": ttl, "ip": ip})
+                ttl = int(parts[0])
+                ip = parts[-1] if system == "Windows" else parts[1]
+                hop = {"ttl": ttl, "ip": ip}
+                hop.update(lookup_ip_info(ip))
+                parsed.append(hop)
             except Exception:
                 continue
 
         json_path.write_text(json.dumps(parsed, indent=2), encoding="utf-8")
-        log("Traceroute (JSON) gespeichert.")
+        log("Traceroute (angereichert) als JSON gespeichert.")
         if txt_path:
-            txt_path.write_text("\n".join([f"{hop['ttl']}\t{hop['ip']}" for hop in parsed]), encoding="utf-8")
+            lines = [f"{hop['ttl']}\t{hop['ip']}\t{hop.get('org', '')} [{hop.get('country', '')}]" for hop in parsed]
+            txt_path.write_text("\n".join(lines), encoding="utf-8")
             log("Traceroute (TXT) gespeichert.")
 
     except Exception as e:

@@ -30,6 +30,7 @@ Mit diesem Tool können Webseiten zuverlässig dokumentiert werden, etwa zur:
 - Plattformunabhängige Traceroute-Analyse (`traceroute.json` und `traceroute.txt`):
   - über Systemkommando `traceroute` (Linux/macOS) bzw. `tracert` (Windows)
   - kein Root erforderlich
+  - angereicherte Informationen pro IP-Hop (Hostname, Ort, Organisation, Land) via [ipinfo.io](https://ipinfo.io)
 - Mitschnitt aller HTTP-Anfragen in einer HAR-Datei (`network.har`)
 - Optional: Konvertierung der HAR-Datei in `network.json`
 
@@ -107,8 +108,8 @@ Das Skript erstellt einen chronologisch benannten Ordner z. B.:
 ├── http_headers.json     ← HTTP-Header vom Server
 ├── network.har           ← Mitschnitt aller HTTP-Anfragen (HAR-Format)
 ├── network.json          ← (optional) JSON-Version der HAR-Datei
-├── traceroute.json       ← Traceroute als strukturierte Hops (JSON)
-├── traceroute.txt        ← Traceroute als Klartextliste
+├── traceroute.json       ← Traceroute-Hops inkl. IP, Hostname, Ort, Organisation, Land
+├── traceroute.txt        ← Traceroute als Text (inkl. Organisation und Land)
 ├── whois.txt             ← WHOIS-Domainabfrage
 ├── video_1.mp4 ...       ← gespeicherte Videoquellen aus der Seite
 ├── metadaten.json        ← Zeit, IP, User-Agent, etc.
@@ -129,6 +130,14 @@ Zur späteren Prüfung, ob Dateien unverändert sind:
 sha256sum -c hashes.sha256
 ```
 
+---
+
+## ⚠️ Hinweise zur IP-Auflösung
+
+Zur Anreicherung der Traceroute-Hops wird eine öffentliche API (`https://ipinfo.io/<ip>/json`) verwendet. Für gelegentliche Nutzung ist **kein API-Schlüssel erforderlich**. Bei vielen Abfragen kann eine Drosselung durch ipinfo.io erfolgen.
+
+---
+
 ## 🧰 Erweiterungsideen
 
 - Integration von Blockchain-Zeitstempeln
@@ -141,4 +150,3 @@ sha256sum -c hashes.sha256
 ## 📄 Lizenz
 
 Dieses Projekt steht unter der **MIT-Lizenz**. Verwendung auf eigene Verantwortung. Es wird keine Haftung für die juristische Verwertbarkeit oder Beweiskraft im Einzelfall übernommen.
-
